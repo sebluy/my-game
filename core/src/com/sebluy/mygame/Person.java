@@ -1,22 +1,30 @@
 package com.sebluy.mygame;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Person {
 
 	private static int currentId = 1;
+	private final static int RADIUS = 25;
 
 	double x;
 	double y;
 	int id;
+	boolean pickedUp;
 	ShapeRenderer shapeRenderer;
 	MyGame game;
+	Map<Integer, Bullet> bullets;
 
 	public Person(MyGame game, double x, double y) {
 		this.x = x;
 		this.y = y;
 		this.game = game;
 		this.shapeRenderer = game.shapeRenderer;
+		bullets = new HashMap<>();
 		id = currentId;
 		currentId += 1;
 		game.people.put(id, this);
@@ -27,14 +35,32 @@ public class Person {
 	}
 
 	public void shoot(Person other) {
-		new Bullet(game, x, y, other.x, other.y);
+		Bullet b = new Bullet(game, x, y, other.x, other.y);
+		bullets.put(b.id, b);
 	}
 
 	public void render() {
-		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+		if (pickedUp) {
+			x = Gdx.input.getX();
+			y = Gdx.graphics.getHeight() - Gdx.input.getY();
+		}
 		shapeRenderer.setColor(0, 1, 0, 1);
-		shapeRenderer.circle((int)x, (int)y, 25);
-		shapeRenderer.end();
+		shapeRenderer.circle((int)x, (int)y, RADIUS);
 	}
-	
+
+	public boolean contains(double x, double y) {
+		return Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2)) < RADIUS;
+	}
+
+	public void pickUp() {
+		pickedUp = true;
+	}
+
+	public void setDown() {
+		pickedUp = false;
+	}
+
+	public boolean shot(Bullet b) {
+		return bullets.containsKey(b.id);
+	}
 }

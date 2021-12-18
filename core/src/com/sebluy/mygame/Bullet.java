@@ -24,20 +24,15 @@ public class Bullet {
 		currentId += 1;
 		xVel = SPEED / Math.sqrt(1 + (yDel * yDel) / (xDel * xDel));
 		yVel = SPEED / Math.sqrt(1 + (xDel * xDel) / (yDel * yDel));
-		System.out.printf("Source %f %f\n", x, y);
-		System.out.printf("Dest %f %f\n", xDest, yDest);
-		System.out.printf("Vel %f %f\n", xVel, yVel);
-		if (yDel < 0 ) xVel = -xVel;
-		if (xDel < 0 ) yVel = -yVel;
+		if (xDel < 0 ) xVel = -xVel;
+		if (yDel < 0 ) yVel = -yVel;
 		this.shapeRenderer = game.shapeRenderer;
 		game.bullets.put(id, this);
 	}
 
 	public void render() {
-		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 		shapeRenderer.setColor(1, 0, 0, 1);
 		shapeRenderer.circle((int)x, (int)y, 5);
-		shapeRenderer.end();
 		float delta = Gdx.graphics.getDeltaTime();
 		x += xVel * delta;
 		y += yVel * delta;
