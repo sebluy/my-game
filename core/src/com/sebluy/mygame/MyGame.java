@@ -6,14 +6,18 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 
 import java.util.*;
 
 public class MyGame extends ApplicationAdapter {
-	static final float CAMERA_SPEED = 20.0f;
+
+	static final float CAMERA_SPEED = 200.0f;
+
 	ShapeRenderer shapeRenderer;
+	SpriteBatch batch;
 	Map<Integer, Person> people;
 	Map<Integer, Person> team1;
 	Map<Integer, Person> team2;
@@ -22,10 +26,10 @@ public class MyGame extends ApplicationAdapter {
 	OrthographicCamera camera;
 	float time = 0;
 	float lastShot = -1;
-
 	@Override
 	public void create () {
 		shapeRenderer = new ShapeRenderer();
+		batch = new SpriteBatch();
 
 		people = new HashMap<>();
 		team1 = new HashMap<>();
@@ -131,20 +135,29 @@ public class MyGame extends ApplicationAdapter {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		camera.update();
-
 		shapeRenderer.setProjectionMatrix(camera.combined);
+		batch.setProjectionMatrix(camera.combined);
+
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 		for (Bullet b : bullets.values()) {
 			b.render();
 		}
 		for (Person p : people.values()) {
-			p.render();
+			p.renderShapes();
+			p.update();
 		}
 		shapeRenderer.end();
+		batch.begin();
+		for (Person p : people.values()) {
+			p.renderSprites();
+		}
+		batch.end();
 	}
 
 	@Override
 	public void dispose () {
 		shapeRenderer.dispose();
+		batch.dispose();
+		Person.texture.dispose();
 	}
 }
