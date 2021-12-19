@@ -2,6 +2,7 @@ package com.sebluy.mygame;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.Map;
 public class Person {
 
 	private static int currentId = 1;
-	private final static int RADIUS = 25;
+	private final static float RADIUS = 25f;
 
 	double x;
 	double y;
@@ -41,11 +42,12 @@ public class Person {
 
 	public void render() {
 		if (pickedUp) {
-			x = Gdx.input.getX();
-			y = Gdx.graphics.getHeight() - Gdx.input.getY();
+			Vector3 cs = game.unproject(Gdx.input.getX(), Gdx.input.getY());
+			x = cs.x;
+			y = cs.y;
 		}
 		shapeRenderer.setColor(0, 1, 0, 1);
-		shapeRenderer.circle((int)x, (int)y, RADIUS);
+		shapeRenderer.circle((float)x, (float)y, RADIUS);
 	}
 
 	public boolean contains(double x, double y) {

@@ -7,11 +7,12 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector3;
 
 import java.util.*;
 
 public class MyGame extends ApplicationAdapter {
-	static final float CAMERA_SPEED = 100.0f;
+	static final float CAMERA_SPEED = 20.0f;
 	ShapeRenderer shapeRenderer;
 	Map<Integer, Person> people;
 	Map<Integer, Person> team1;
@@ -31,19 +32,16 @@ public class MyGame extends ApplicationAdapter {
 		team2 = new HashMap<>();
 		bullets = new HashMap<>();
 
-		int width = Gdx.graphics.getWidth();
-		int height = Gdx.graphics.getHeight();
-
-		camera = new OrthographicCamera(width, height);
-		camera.position.set((float)width / 2, (float)height / 2, 0);
+		camera = new OrthographicCamera(1000, 1000);
+		camera.position.set(500, 500, 0);
 		camera.update();
 
 		Gdx.input.setInputProcessor(new InputAdapter() {
 			@Override
 			public boolean touchDown(int x, int y, int pointer, int button) {
-				y = Gdx.graphics.getHeight() - y;
+				Vector3 cs = unproject(x, y);
 				for (Person p : people.values()) {
-					if (p.contains(x, y)) {
+					if (p.contains(cs.x, cs.y)) {
 						pickedUp = p;
 						p.pickUp();
 					}
@@ -58,12 +56,16 @@ public class MyGame extends ApplicationAdapter {
 			}
 		});
 
-			for (int x = width / 10 ; x < width; x += width / 10) {
-				Person p1 = new Person(this, x, (double)height / 10);
-				Person p2 = new Person(this, x, (double)height * 9 / 10);
+			for (float x = 100 ; x < 1000; x += 100) {
+				Person p1 = new Person(this, x, 100);
+				Person p2 = new Person(this, x, 900);
 				team1.put(p1.id, p1);
 				team2.put(p2.id, p2);
 			}
+	}
+
+	public Vector3 unproject(float x, float y) {
+		return camera.unproject(new Vector3(x, y, 0));
 	}
 
 	private Person randomTeamMember(Map<Integer, Person> team) {

@@ -5,7 +5,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Bullet {
 
-	final static double SPEED = 200.0; // Pixels / second
+	final static float SIZE = 10f;
+	final static float SPEED = 500f; // Pixels / second
 	static int currentId = 1;
 
 	ShapeRenderer shapeRenderer;
@@ -32,7 +33,7 @@ public class Bullet {
 
 	public void render() {
 		shapeRenderer.setColor(1, 0, 0, 1);
-		shapeRenderer.circle((int)x, (int)y, 5);
+		shapeRenderer.circle((int)x, (int)y, SIZE);
 		float delta = Gdx.graphics.getDeltaTime();
 		x += xVel * delta;
 		y += yVel * delta;
