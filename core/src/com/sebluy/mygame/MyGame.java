@@ -26,6 +26,8 @@ public class MyGame extends ApplicationAdapter {
 	OrthographicCamera camera;
 	float time = 0;
 	float lastShot = -1;
+	GameMap gameMap;
+
 	@Override
 	public void create () {
 		shapeRenderer = new ShapeRenderer();
@@ -35,6 +37,7 @@ public class MyGame extends ApplicationAdapter {
 		team1 = new HashMap<>();
 		team2 = new HashMap<>();
 		bullets = new HashMap<>();
+		gameMap = new GameMap(this);
 
 		camera = new OrthographicCamera(1000, 1000);
 		camera.position.set(500, 500, 0);
@@ -45,7 +48,7 @@ public class MyGame extends ApplicationAdapter {
 			public boolean touchDown(int x, int y, int pointer, int button) {
 				Vector3 cs = unproject(x, y);
 				for (Person p : people.values()) {
-					if (p.contains(cs.x, cs.y)) {
+					if (p.getBoundingRectangle().contains(cs.x, cs.y)) {
 						pickedUp = p;
 						p.pickUp();
 					}
@@ -60,12 +63,13 @@ public class MyGame extends ApplicationAdapter {
 			}
 		});
 
-			for (float x = 100 ; x < 1000; x += 100) {
-				Person p1 = new Person(this, x, 100);
-				Person p2 = new Person(this, x, 900);
-				team1.put(p1.id, p1);
-				team2.put(p2.id, p2);
-			}
+		Person p1 = new Person(this, 100, 100);
+//		for (float x = 100 ; x < 1000; x += 100) {
+//			Person p1 = new Person(this, x, 100);
+//			Person p2 = new Person(this, x, 900);
+//			team1.put(p1.id, p1);
+//			team2.put(p2.id, p2);
+//		}
 	}
 
 	public Vector3 unproject(float x, float y) {
@@ -94,7 +98,7 @@ public class MyGame extends ApplicationAdapter {
 		ArrayList<Person> removeP = new ArrayList<>();
 		for (Bullet b : bullets.values()) {
 			for (Person p : people.values()) {
-				if (!p.shot(b) && p.contains(b.x, b.y)) {
+				if (!p.shot(b) && p.getBoundingRectangle().contains(b.x, b.y)) {
 					removeB.add(b);
 					removeP.add(p);
 					break;
@@ -126,9 +130,9 @@ public class MyGame extends ApplicationAdapter {
 	}
 
 	@Override
-	public void render () {
+	public void render() {
 		handleCameraMovement();
-		shootIfNecessary();
+//		shootIfNecessary();
 		updateIfShot();
 
 		Gdx.gl.glClearColor(.25f, .25f, .25f, 1);
@@ -139,6 +143,7 @@ public class MyGame extends ApplicationAdapter {
 		batch.setProjectionMatrix(camera.combined);
 
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+		gameMap.render();
 		for (Bullet b : bullets.values()) {
 			b.render();
 		}

@@ -5,8 +5,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Bullet {
 
-	final static float SIZE = 10f;
-	final static float SPEED = 500f; // Pixels / second
+	final static float SIZE = 4f;
+	final static float SPEED = 1000f; // Pixels / second
 	static int currentId = 1;
 
 	ShapeRenderer shapeRenderer;
