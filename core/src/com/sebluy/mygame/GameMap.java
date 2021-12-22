@@ -13,7 +13,11 @@ public class GameMap {
 	public GameMap(MyGame game) {
 		this.game = game;
 		walls = new ArrayList<>();
-		setPosition(0, 0)
+	}
+
+	public static GameMap defaultMap(MyGame game) {
+		GameMap map = new GameMap(game);
+		map.setPosition(0, 0)
 				.verticalWall(1000)
 				.horizontalWall(1000)
 				.verticalWall(-1000)
@@ -25,7 +29,19 @@ public class GameMap {
 				.setPosition(0, 250)
 				.horizontalWall(300)
 				.verticalWall(400);
+		return map;
 	}
+
+	public static GameMap testMap(MyGame game) {
+		GameMap map = new GameMap(game);
+		map.setPosition(0, 0)
+				.verticalWall(300)
+				.horizontalWall(300)
+				.verticalWall(-300)
+				.horizontalWall(-300);
+		return map;
+	}
+
 
 	private GameMap setPosition(float x, float y) {
 		position = new Vector2(x, y);

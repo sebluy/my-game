@@ -37,7 +37,7 @@ public class MyGame extends ApplicationAdapter {
 		team1 = new HashMap<>();
 		team2 = new HashMap<>();
 		bullets = new HashMap<>();
-		gameMap = new GameMap(this);
+		gameMap = GameMap.defaultMap(this);
 
 		camera = new OrthographicCamera(1000, 1000);
 		camera.position.set(500, 500, 0);
@@ -63,7 +63,9 @@ public class MyGame extends ApplicationAdapter {
 			}
 		});
 
-		Person p1 = new Person(this, 100, 100);
+		for (int i = 0; i < 20; i++) {
+			Person p1 = new Person(this, (float) (Math.random()*1000), (float) (Math.random()*1000));
+		}
 //		for (float x = 100 ; x < 1000; x += 100) {
 //			Person p1 = new Person(this, x, 100);
 //			Person p2 = new Person(this, x, 900);

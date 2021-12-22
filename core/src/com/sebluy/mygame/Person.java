@@ -4,6 +4,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.Intersector.MinimumTranslationVector;
+import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 
@@ -13,7 +16,7 @@ import java.util.Map;
 public class Person {
 
 	private static int currentId = 1;
-	private final static float SPEED = 100f;
+	private final static float SPEED = 1000f;
 	private final static float RADIUS = 40f;
 	static Texture texture;
 	Sprite sprite;
@@ -52,10 +55,11 @@ public class Person {
 	}
 
 	private void loadSprite() {
-		if (texture != null) return;
-		texture = new Texture(
-			Gdx.files.internal("Top_Down_Survivor/rifle/idle/survivor-idle_rifle_0.png")
-		);
+		if (texture == null) {
+			texture = new Texture(
+					Gdx.files.internal("Top_Down_Survivor/rifle/idle/survivor-idle_rifle_0.png")
+			);
+		}
 		sprite = new Sprite(texture);
 		sprite.setSize(RADIUS * 2, RADIUS * 2);
 		sprite.setOriginCenter();
@@ -67,7 +71,6 @@ public class Person {
 		double directionR = direction / 180 * Math.PI;
 		xVel = (float) Math.cos(directionR) * SPEED;
 		yVel = (float) Math.sin(directionR) * SPEED;
-		time = 2;
 		System.out.println("Turning towards " + direction);
 	}
 
@@ -77,30 +80,64 @@ public class Person {
 			x = cs.x;
 			y = cs.y;
 		} else {
-			Wall wall = getTouchingWall();
-			if (time < 1.5 && wall != null) {
-				System.out.println("Hit wall");
-				if (wall.isVertical()) {
-					updateDirection(180 - direction);
-				} else {
-					updateDirection(-direction);
-				}
-			} else if (time < 0) {
-				updateDirection((float)(Math.random() * 360));
+			if (time < 0) {
+				updateDirection(direction + (float)(Math.random() * 60 - 30));
+				time = 2;
 			}
 			x += xVel * Gdx.graphics.getDeltaTime();
 			y += yVel * Gdx.graphics.getDeltaTime();
 			time -= Gdx.graphics.getDeltaTime();
 		}
+		preventOverlap();
 	}
 
-	private Wall getTouchingWall() {
+	private void preventOverlap() {
 		for (Wall wall : game.gameMap.walls) {
-			if (getBoundingRectangle().overlaps(wall.getBoundingRectangle())) {
-				return wall;
-			}
+			preventOverlap(wall);
 		}
-		return null;
+	}
+
+	private void preventOverlap(Wall wall) {
+		Rectangle boundary1 = this.getBoundingRectangle();
+		Rectangle boundary2 = wall.getBoundingRectangle();
+
+		if (!boundary1.overlaps(boundary2)) return;
+
+		MinimumTranslationVector mtv = new MinimumTranslationVector();
+		Intersector.overlapConvexPolygons(
+			rectangleToPolygon(boundary1), rectangleToPolygon(boundary2), mtv
+		);
+
+		float delX = mtv.normal.x * mtv.depth;
+		float delY = mtv.normal.y * mtv.depth;
+		System.out.printf("Velocity: %f %f\n", xVel, yVel);
+		System.out.printf("Adjusting position: %f %f\n", delX, delY);
+		x += delX;
+		y += delY;
+		float newDirection;
+		if (delX == 0) {
+			if (xVel > 0) newDirection = 0;
+			else if (xVel < 0) newDirection = 180;
+			else newDirection = direction - 90;
+		} else {
+			if (yVel > 0) newDirection = 90;
+			else if (yVel < 0) newDirection = 270;
+			else newDirection = direction - 90;
+		}
+		updateDirection(newDirection);
+	}
+
+	private Polygon rectangleToPolygon(Rectangle r) {
+		return new Polygon(new float[]{
+				r.x,
+				r.y,
+				r.x + r.width,
+				r.y,
+				r.x + r.width,
+				r.y + r.height,
+				r.x,
+				r.y + r.height
+		});
 	}
 
 	public Rectangle getBoundingRectangle() {
