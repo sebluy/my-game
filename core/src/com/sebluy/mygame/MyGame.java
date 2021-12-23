@@ -4,6 +4,8 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -11,6 +13,12 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 
 import java.util.*;
+import java.util.function.Function;
+
+/*
+	Music from: https://musiclab.chromeexperiments.com/Song-Maker/song/5100954262700032
+	Sprites from: https://opengameart.org/content/animated-top-down-survivor-player
+ */
 
 public class MyGame extends ApplicationAdapter {
 
@@ -19,8 +27,6 @@ public class MyGame extends ApplicationAdapter {
 	ShapeRenderer shapeRenderer;
 	SpriteBatch batch;
 	Map<Integer, Person> people;
-	Map<Integer, Person> team1;
-	Map<Integer, Person> team2;
 	Map<Integer, Bullet> bullets;
 	Person pickedUp;
 	OrthographicCamera camera;
@@ -34,15 +40,30 @@ public class MyGame extends ApplicationAdapter {
 		batch = new SpriteBatch();
 
 		people = new HashMap<>();
-		team1 = new HashMap<>();
-		team2 = new HashMap<>();
 		bullets = new HashMap<>();
+
 		gameMap = GameMap.defaultMap(this);
+//		gameMap = GameMap.testMap(this, 500);
+
+		Music music = Gdx.audio.newMusic(Gdx.files.internal("song.wav"));
+		music.setLooping(true);
+		music.play();
 
 		camera = new OrthographicCamera(1000, 1000);
 		camera.position.set(500, 500, 0);
 		camera.update();
 
+		setInputProcessor();
+
+		Person p1 = new Person(this, 1, 100, 300);
+		Person p2 = new Person(this, 2,  400, 200);
+	}
+
+	private float randomPos() {
+		return (float) (Math.random() * 950 + 25);
+	}
+
+	private void setInputProcessor() {
 		Gdx.input.setInputProcessor(new InputAdapter() {
 			@Override
 			public boolean touchDown(int x, int y, int pointer, int button) {
@@ -62,16 +83,6 @@ public class MyGame extends ApplicationAdapter {
 				return true;
 			}
 		});
-
-		for (int i = 0; i < 20; i++) {
-			Person p1 = new Person(this, (float) (Math.random()*1000), (float) (Math.random()*1000));
-		}
-//		for (float x = 100 ; x < 1000; x += 100) {
-//			Person p1 = new Person(this, x, 100);
-//			Person p2 = new Person(this, x, 900);
-//			team1.put(p1.id, p1);
-//			team2.put(p2.id, p2);
-//		}
 	}
 
 	public Vector3 unproject(float x, float y) {
@@ -82,38 +93,27 @@ public class MyGame extends ApplicationAdapter {
 		return (Person)team.values().toArray()[(int)(Math.random() * team.size())];
 	}
 
-	private void shootIfNecessary() {
-		if (team1.size() == 0 || team2.size() == 0) return;
-		time += Gdx.graphics.getDeltaTime();
-		if (lastShot < 0 || time - lastShot > 1.0) {
-			if (Math.random() > 0.5) {
-				randomTeamMember(team1).shoot(randomTeamMember(team2));
-			} else {
-				randomTeamMember(team2).shoot(randomTeamMember(team1));
+	private void shootIfPossible() {
+		for (Person person1 : people.values()) {
+			for (Person person2 : people.values()) {
+				person1.tryToShoot(person2);
 			}
-			lastShot = time;
 		}
 	}
 
 	private void updateIfShot() {
-		ArrayList<Bullet> removeB = new ArrayList<>();
-		ArrayList<Person> removeP = new ArrayList<>();
-		for (Bullet b : bullets.values()) {
-			for (Person p : people.values()) {
+		Iterator<Bullet> bi = bullets.values().iterator();
+		while (bi.hasNext()) {
+			Bullet b = bi.next();
+			Iterator<Person> pi = people.values().iterator();
+			while (pi.hasNext()) {
+				Person p = pi.next();
 				if (!p.shot(b) && p.getBoundingRectangle().contains(b.x, b.y)) {
-					removeB.add(b);
-					removeP.add(p);
+					pi.remove();
+					bi.remove();
 					break;
 				}
 			}
-		}
-		for (Bullet b : removeB) {
-			bullets.remove(b.id);
-		}
-		for (Person p : removeP) {
-			people.remove(p.id);
-			team1.remove(p.id);
-			team2.remove(p.id);
 		}
 	}
 
@@ -134,7 +134,7 @@ public class MyGame extends ApplicationAdapter {
 	@Override
 	public void render() {
 		handleCameraMovement();
-//		shootIfNecessary();
+		shootIfPossible();
 		updateIfShot();
 
 		Gdx.gl.glClearColor(.25f, .25f, .25f, 1);
@@ -146,16 +146,17 @@ public class MyGame extends ApplicationAdapter {
 
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 		gameMap.render();
-		for (Bullet b : bullets.values()) {
-			b.render();
+		Iterator<Bullet> it = bullets.values().iterator();
+		while (it.hasNext()) {
+			it.next().render(it);
 		}
 		for (Person p : people.values()) {
 			p.renderShapes();
-			p.update();
 		}
 		shapeRenderer.end();
 		batch.begin();
 		for (Person p : people.values()) {
+			p.update();
 			p.renderSprites();
 		}
 		batch.end();

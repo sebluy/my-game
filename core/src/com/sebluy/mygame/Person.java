@@ -4,11 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.Intersector.MinimumTranslationVector;
-import com.badlogic.gdx.math.Polygon;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector3;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +13,7 @@ import java.util.Map;
 public class Person {
 
 	private static int currentId = 1;
-	private final static float SPEED = 1000f;
+	private final static float SPEED = 100f;
 	private final static float RADIUS = 40f;
 	static Texture texture;
 	Sprite sprite;
@@ -24,20 +21,21 @@ public class Person {
 	float x;
 	float y;
 	int id;
+	int team;
 	boolean pickedUp;
-	ShapeRenderer shapeRenderer;
 	MyGame game;
 	Map<Integer, Bullet> bullets;
-	float time = 0;
+	float directionTimeout = 0;
+	float bulletTimeout = 0;
 	private float xVel = 0;
 	private float yVel = 0;
 	private float direction = 0;
 
-	public Person(MyGame game, float x, float y) {
+	public Person(MyGame game, int team, float x, float y) {
 		this.x = x;
 		this.y = y;
 		this.game = game;
-		this.shapeRenderer = game.shapeRenderer;
+		this.team = team;
 		bullets = new HashMap<>();
 		id = currentId;
 		currentId += 1;
@@ -52,6 +50,7 @@ public class Person {
 	public void shoot(Person other) {
 		Bullet b = new Bullet(game, x, y, other.x, other.y);
 		bullets.put(b.id, b);
+		bulletTimeout = 1;
 	}
 
 	private void loadSprite() {
@@ -63,7 +62,7 @@ public class Person {
 		sprite = new Sprite(texture);
 		sprite.setSize(RADIUS * 2, RADIUS * 2);
 		sprite.setOriginCenter();
-		sprite.setPosition(x, y);
+		sprite.setCenter(x, y);
 	}
 
 	private void updateDirection(float newDirection) {
@@ -71,7 +70,6 @@ public class Person {
 		double directionR = direction / 180 * Math.PI;
 		xVel = (float) Math.cos(directionR) * SPEED;
 		yVel = (float) Math.sin(directionR) * SPEED;
-		System.out.println("Turning towards " + direction);
 	}
 
 	public void update() {
@@ -80,14 +78,15 @@ public class Person {
 			x = cs.x;
 			y = cs.y;
 		} else {
-			if (time < 0) {
+			if (directionTimeout < 0) {
 				updateDirection(direction + (float)(Math.random() * 60 - 30));
-				time = 2;
+				directionTimeout = 2;
 			}
 			x += xVel * Gdx.graphics.getDeltaTime();
 			y += yVel * Gdx.graphics.getDeltaTime();
-			time -= Gdx.graphics.getDeltaTime();
 		}
+		directionTimeout -= Gdx.graphics.getDeltaTime();
+		bulletTimeout -= Gdx.graphics.getDeltaTime();
 		preventOverlap();
 	}
 
@@ -110,8 +109,6 @@ public class Person {
 
 		float delX = mtv.normal.x * mtv.depth;
 		float delY = mtv.normal.y * mtv.depth;
-		System.out.printf("Velocity: %f %f\n", xVel, yVel);
-		System.out.printf("Adjusting position: %f %f\n", delX, delY);
 		x += delX;
 		y += delY;
 		float newDirection;
@@ -145,14 +142,17 @@ public class Person {
 	}
 
 	public void renderSprites() {
-		sprite.setPosition(x, y);
 		sprite.setRotation(direction);
+		sprite.setCenter(x, y);
 		sprite.draw(game.batch);
 	}
 
 	public void renderShapes() {
-//		shapeRenderer.setColor(0, 1, 0, 1);
-//		shapeRenderer.circle(x, y, RADIUS);
+		Rectangle rect = sprite.getBoundingRectangle();
+		game.shapeRenderer.setColor(1, 0, 0, 1);
+		game.shapeRenderer.rect(rect.x, rect.y, rect.width, rect.height);
+		game.shapeRenderer.setColor(0, 1, 0, 1);
+		game.shapeRenderer.circle(x, y, 20);
 	}
 
 	public void pickUp() {
@@ -165,5 +165,31 @@ public class Person {
 
 	public boolean shot(Bullet b) {
 		return bullets.containsKey(b.id);
+	}
+
+	public void tryToShoot(Person other) {
+		if (other.team == team) return;
+		Vector2 thisV = new Vector2(x, y);
+		Vector2 otherV = new Vector2(other.x, other.y);
+
+		// Check angles
+		float angle = otherV.cpy().sub(thisV).angleDeg();
+		if (Math.abs(angle - direction % 360) > 60f) {
+			return;
+		}
+
+		// Check walls
+		for (Wall wall : game.gameMap.walls) {
+			boolean intersects = Intersector.intersectSegmentRectangle(
+					thisV, otherV, wall.getBoundingRectangle()
+			);
+			if (intersects) {
+				return;
+			}
+		}
+
+		updateDirection(angle);
+		if (bulletTimeout > 0) return;
+		shoot(other);
 	}
 }

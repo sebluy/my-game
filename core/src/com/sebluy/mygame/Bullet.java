@@ -3,6 +3,8 @@ package com.sebluy.mygame;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import java.util.Iterator;
+
 public class Bullet {
 
 	final static float SIZE = 4f;
@@ -10,6 +12,7 @@ public class Bullet {
 	static int currentId = 1;
 
 	ShapeRenderer shapeRenderer;
+	MyGame game;
 	int id;
 	float x;
 	float y;
@@ -19,6 +22,7 @@ public class Bullet {
 	public Bullet(MyGame game, float x, float y, float xDest, float yDest) {
 		this.x = x;
 		this.y = y;
+		this.game = game;
 		float xDel = xDest - x;
 		float yDel = yDest - y;
 		id = currentId;
@@ -31,12 +35,13 @@ public class Bullet {
 		game.bullets.put(id, this);
 	}
 
-	public void render() {
+	public void render(Iterator<Bullet> it) {
 		shapeRenderer.setColor(0, 0, 0, 1);
 		shapeRenderer.circle((int)x, (int)y, SIZE);
 		float delta = Gdx.graphics.getDeltaTime();
 		x += xVel * delta;
 		y += yVel * delta;
+		if (x < 0 || x > 1000 || y < 0 || y > 1000) it.remove();
 	}
 
 }

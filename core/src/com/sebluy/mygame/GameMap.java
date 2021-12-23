@@ -32,13 +32,13 @@ public class GameMap {
 		return map;
 	}
 
-	public static GameMap testMap(MyGame game) {
+	public static GameMap testMap(MyGame game, int size) {
 		GameMap map = new GameMap(game);
 		map.setPosition(0, 0)
-				.verticalWall(300)
-				.horizontalWall(300)
-				.verticalWall(-300)
-				.horizontalWall(-300);
+				.verticalWall(size)
+				.horizontalWall(size)
+				.verticalWall(-size)
+				.horizontalWall(-size);
 		return map;
 	}
 
