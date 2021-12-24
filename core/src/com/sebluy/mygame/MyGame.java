@@ -7,6 +7,7 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
@@ -35,11 +36,14 @@ public class MyGame extends ApplicationAdapter {
 	OrthographicCamera camera;
 	GameMap gameMap;
 	PersonPath path;
+	BitmapFont font;
 
 	@Override
 	public void create () {
 		shapeRenderer = new ShapeRenderer();
 		batch = new SpriteBatch();
+		font = new BitmapFont();
+		font.getData().setScale(2);
 
 		people = new HashMap<>();
 		bullets = new HashMap<>();
@@ -129,7 +133,7 @@ public class MyGame extends ApplicationAdapter {
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 		gameMap.render();
 		Iterator<Bullet> it = bullets.values().iterator();
-		path.render();
+//		path.renderShapes();
 		while (it.hasNext()) {
 			Bullet b = it.next();
 			b.update(it);
@@ -139,7 +143,9 @@ public class MyGame extends ApplicationAdapter {
 			p.renderShapes();
 		}
 		shapeRenderer.end();
+
 		batch.begin();
+		path.renderSprites();
 		for (Person p : people.values()) {
 			p.update();
 			p.renderSprites();
@@ -151,6 +157,8 @@ public class MyGame extends ApplicationAdapter {
 	public void dispose () {
 		shapeRenderer.dispose();
 		batch.dispose();
-		Person.texture.dispose();
+		if (Person.texture != null) {
+			Person.texture.dispose();
+		}
 	}
 }
