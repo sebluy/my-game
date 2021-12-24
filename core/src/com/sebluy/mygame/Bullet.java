@@ -2,6 +2,8 @@ package com.sebluy.mygame;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector3;
 
 import java.util.Iterator;
 
@@ -35,13 +37,27 @@ public class Bullet {
 		game.bullets.put(id, this);
 	}
 
-	public void render(Iterator<Bullet> it) {
+	public void render() {
 		shapeRenderer.setColor(0, 0, 0, 1);
 		shapeRenderer.circle((int)x, (int)y, SIZE);
 		float delta = Gdx.graphics.getDeltaTime();
 		x += xVel * delta;
 		y += yVel * delta;
-		if (x < 0 || x > 1000 || y < 0 || y > 1000) it.remove();
+	}
+
+	public void update(Iterator<Bullet> it) {
+		for (Wall wall : game.gameMap.walls) {
+			Rectangle boundary1 = this.getBoundingRectangle();
+			Rectangle boundary2 = wall.getBoundingRectangle();
+			if (boundary1.overlaps(boundary2)) {
+				it.remove();
+				return;
+			}
+		}
+	}
+
+	private Rectangle getBoundingRectangle() {
+		return new Rectangle(x - SIZE, y - SIZE, SIZE * 2f, SIZE * 2f);
 	}
 
 }

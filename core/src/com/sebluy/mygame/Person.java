@@ -3,7 +3,6 @@ package com.sebluy.mygame;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.Intersector.MinimumTranslationVector;
 
@@ -79,11 +78,14 @@ public class Person {
 			y = cs.y;
 		} else {
 			if (directionTimeout < 0) {
-				updateDirection(direction + (float)(Math.random() * 60 - 30));
-				directionTimeout = 2;
+				updateDirection(direction + (float)(Math.random() - 0.5) * 8f);
+				directionTimeout = 0.1f;
 			}
 			x += xVel * Gdx.graphics.getDeltaTime();
 			y += yVel * Gdx.graphics.getDeltaTime();
+		}
+		for (Person person2 : game.people.values()) {
+			tryToShoot(person2);
 		}
 		directionTimeout -= Gdx.graphics.getDeltaTime();
 		bulletTimeout -= Gdx.graphics.getDeltaTime();
@@ -138,7 +140,8 @@ public class Person {
 	}
 
 	public Rectangle getBoundingRectangle() {
-		return sprite.getBoundingRectangle();
+		float size = RADIUS * 2f * 1.42f;
+		return new Rectangle(x - size / 2f, y - size / 2f, size, size);
 	}
 
 	public void renderSprites() {
@@ -148,7 +151,7 @@ public class Person {
 	}
 
 	public void renderShapes() {
-		Rectangle rect = sprite.getBoundingRectangle();
+		Rectangle rect = getBoundingRectangle();
 		game.shapeRenderer.setColor(1, 0, 0, 1);
 		game.shapeRenderer.rect(rect.x, rect.y, rect.width, rect.height);
 		game.shapeRenderer.setColor(0, 1, 0, 1);

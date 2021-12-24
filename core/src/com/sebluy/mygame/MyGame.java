@@ -5,19 +5,25 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /*
 	Music from: https://musiclab.chromeexperiments.com/Song-Maker/song/5100954262700032
 	Sprites from: https://opengameart.org/content/animated-top-down-survivor-player
+
+	TODO: Destroy bullets when they hit the wall
+	TODO: Use Vector2 whenever possible.
+	TODO: Have shot lead target.
+	TODO: Make a smaller person collision box for bullet collisions.
+	TODO: Allow user to create paths for people. A list of positions and directions.
  */
 
 public class MyGame extends ApplicationAdapter {
@@ -30,8 +36,6 @@ public class MyGame extends ApplicationAdapter {
 	Map<Integer, Bullet> bullets;
 	Person pickedUp;
 	OrthographicCamera camera;
-	float time = 0;
-	float lastShot = -1;
 	GameMap gameMap;
 
 	@Override
@@ -93,14 +97,6 @@ public class MyGame extends ApplicationAdapter {
 		return (Person)team.values().toArray()[(int)(Math.random() * team.size())];
 	}
 
-	private void shootIfPossible() {
-		for (Person person1 : people.values()) {
-			for (Person person2 : people.values()) {
-				person1.tryToShoot(person2);
-			}
-		}
-	}
-
 	private void updateIfShot() {
 		Iterator<Bullet> bi = bullets.values().iterator();
 		while (bi.hasNext()) {
@@ -134,7 +130,6 @@ public class MyGame extends ApplicationAdapter {
 	@Override
 	public void render() {
 		handleCameraMovement();
-		shootIfPossible();
 		updateIfShot();
 
 		Gdx.gl.glClearColor(.25f, .25f, .25f, 1);
@@ -148,7 +143,9 @@ public class MyGame extends ApplicationAdapter {
 		gameMap.render();
 		Iterator<Bullet> it = bullets.values().iterator();
 		while (it.hasNext()) {
-			it.next().render(it);
+			Bullet b = it.next();
+			b.update(it);
+			b.render();
 		}
 		for (Person p : people.values()) {
 			p.renderShapes();
