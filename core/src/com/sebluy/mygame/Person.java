@@ -17,8 +17,7 @@ public class Person {
 	static Texture texture;
 	Sprite sprite;
 
-	float x;
-	float y;
+	Vector2 pos;
 	int id;
 	int team;
 	boolean pickedUp;
@@ -26,15 +25,14 @@ public class Person {
 	Map<Integer, Bullet> bullets;
 	float directionTimeout = 0;
 	float bulletTimeout = 0;
-	private float xVel = 0;
-	private float yVel = 0;
+	private final Vector2 vel;
 	private float direction = 0;
 
-	public Person(MyGame game, int team, float x, float y) {
-		this.x = x;
-		this.y = y;
+	public Person(MyGame game, int team, Vector2 pos) {
+		this.pos = pos;
 		this.game = game;
 		this.team = team;
+		vel = new Vector2(0, SPEED);
 		bullets = new HashMap<>();
 		id = currentId;
 		currentId += 1;
@@ -43,11 +41,11 @@ public class Person {
 	}
 
 	public String toString() {
-		return String.format("Person %d %f %f", id, x, y);
+		return String.format("Person %d %f %f", id, pos.x, pos.y);
 	}
 
 	public void shoot(Person other) {
-		Bullet b = new Bullet(game, x, y, other.x, other.y);
+		Bullet b = new Bullet(game, pos, other.pos);
 		bullets.put(b.id, b);
 		bulletTimeout = 1;
 	}
@@ -61,28 +59,25 @@ public class Person {
 		sprite = new Sprite(texture);
 		sprite.setSize(RADIUS * 2, RADIUS * 2);
 		sprite.setOriginCenter();
-		sprite.setCenter(x, y);
+		sprite.setCenter(pos.x, pos.y);
 	}
 
 	private void updateDirection(float newDirection) {
 		direction = newDirection % 360;
-		double directionR = direction / 180 * Math.PI;
-		xVel = (float) Math.cos(directionR) * SPEED;
-		yVel = (float) Math.sin(directionR) * SPEED;
+		vel.setAngleDeg(direction);
 	}
 
 	public void update() {
 		if (pickedUp) {
 			Vector3 cs = game.unproject(Gdx.input.getX(), Gdx.input.getY());
-			x = cs.x;
-			y = cs.y;
+			pos.x = cs.x;
+			pos.y = cs.y;
 		} else {
-			if (directionTimeout < 0) {
+			if (directionTimeout <= 0) {
 				updateDirection(direction + (float)(Math.random() - 0.5) * 8f);
 				directionTimeout = 0.1f;
 			}
-			x += xVel * Gdx.graphics.getDeltaTime();
-			y += yVel * Gdx.graphics.getDeltaTime();
+			pos.add(vel.cpy().scl(Gdx.graphics.getDeltaTime()));
 		}
 		for (Person person2 : game.people.values()) {
 			tryToShoot(person2);
@@ -111,16 +106,16 @@ public class Person {
 
 		float delX = mtv.normal.x * mtv.depth;
 		float delY = mtv.normal.y * mtv.depth;
-		x += delX;
-		y += delY;
+		pos.x += delX;
+		pos.y += delY;
 		float newDirection;
 		if (delX == 0) {
-			if (xVel > 0) newDirection = 0;
-			else if (xVel < 0) newDirection = 180;
+			if (vel.x > 0) newDirection = 0;
+			else if (vel.x < 0) newDirection = 180;
 			else newDirection = direction - 90;
 		} else {
-			if (yVel > 0) newDirection = 90;
-			else if (yVel < 0) newDirection = 270;
+			if (vel.y > 0) newDirection = 90;
+			else if (vel.y < 0) newDirection = 270;
 			else newDirection = direction - 90;
 		}
 		updateDirection(newDirection);
@@ -141,12 +136,12 @@ public class Person {
 
 	public Rectangle getBoundingRectangle() {
 		float size = RADIUS * 2f * 1.42f;
-		return new Rectangle(x - size / 2f, y - size / 2f, size, size);
+		return new Rectangle(pos.x - size / 2f, pos.y - size / 2f, size, size);
 	}
 
 	public void renderSprites() {
 		sprite.setRotation(direction);
-		sprite.setCenter(x, y);
+		sprite.setCenter(pos.x, pos.y);
 		sprite.draw(game.batch);
 	}
 
@@ -155,7 +150,7 @@ public class Person {
 		game.shapeRenderer.setColor(1, 0, 0, 1);
 		game.shapeRenderer.rect(rect.x, rect.y, rect.width, rect.height);
 		game.shapeRenderer.setColor(0, 1, 0, 1);
-		game.shapeRenderer.circle(x, y, 20);
+		game.shapeRenderer.circle(pos.x, pos.y, 20);
 	}
 
 	public void pickUp() {
@@ -172,11 +167,9 @@ public class Person {
 
 	public void tryToShoot(Person other) {
 		if (other.team == team) return;
-		Vector2 thisV = new Vector2(x, y);
-		Vector2 otherV = new Vector2(other.x, other.y);
 
 		// Check angles
-		float angle = otherV.cpy().sub(thisV).angleDeg();
+		float angle = other.pos.cpy().sub(pos).angleDeg();
 		if (Math.abs(angle - direction % 360) > 60f) {
 			return;
 		}
@@ -184,7 +177,7 @@ public class Person {
 		// Check walls
 		for (Wall wall : game.gameMap.walls) {
 			boolean intersects = Intersector.intersectSegmentRectangle(
-					thisV, otherV, wall.getBoundingRectangle()
+					pos, other.pos, wall.getBoundingRectangle()
 			);
 			if (intersects) {
 				return;

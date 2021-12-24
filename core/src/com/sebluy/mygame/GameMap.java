@@ -62,13 +62,6 @@ public class GameMap {
 		return this;
 	}
 
-	private GameMap wallTo(float x, float y) {
-		Vector2 nextPosition = new Vector2(x, y);
-		walls.add(new Wall(game, position, nextPosition));
-		position = nextPosition;
-		return this;
-	}
-
 	public void render() {
 		for (Wall wall : walls) {
 			wall.render();

@@ -3,6 +3,7 @@ package com.sebluy.mygame;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
 import java.util.Iterator;
@@ -16,33 +17,24 @@ public class Bullet {
 	ShapeRenderer shapeRenderer;
 	MyGame game;
 	int id;
-	float x;
-	float y;
-	float xVel;
-	float yVel;
+	Vector2 pos;
+	Vector2 vel;
 
-	public Bullet(MyGame game, float x, float y, float xDest, float yDest) {
-		this.x = x;
-		this.y = y;
-		this.game = game;
-		float xDel = xDest - x;
-		float yDel = yDest - y;
+	public Bullet(MyGame game, Vector2 src, Vector2 dest) {
 		id = currentId;
 		currentId += 1;
-		xVel = (float)(SPEED / Math.sqrt(1 + (yDel * yDel) / (xDel * xDel)));
-		yVel = (float)(SPEED / Math.sqrt(1 + (xDel * xDel) / (yDel * yDel)));
-		if (xDel < 0 ) xVel = -xVel;
-		if (yDel < 0 ) yVel = -yVel;
+		this.pos = src.cpy();
+		this.game = game;
+		this.vel = dest.cpy().sub(src).nor().scl(SPEED);
 		this.shapeRenderer = game.shapeRenderer;
 		game.bullets.put(id, this);
 	}
 
 	public void render() {
 		shapeRenderer.setColor(0, 0, 0, 1);
-		shapeRenderer.circle((int)x, (int)y, SIZE);
+		shapeRenderer.circle((int)pos.x, (int)pos.y, SIZE);
 		float delta = Gdx.graphics.getDeltaTime();
-		x += xVel * delta;
-		y += yVel * delta;
+		pos.add(vel.cpy().scl(delta));
 	}
 
 	public void update(Iterator<Bullet> it) {
@@ -57,7 +49,7 @@ public class Bullet {
 	}
 
 	private Rectangle getBoundingRectangle() {
-		return new Rectangle(x - SIZE, y - SIZE, SIZE * 2f, SIZE * 2f);
+		return new Rectangle(pos.x - SIZE, pos.y - SIZE, SIZE * 2f, SIZE * 2f);
 	}
 
 }

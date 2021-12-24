@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
 import java.util.HashMap;
@@ -19,7 +20,6 @@ import java.util.Map;
 	Music from: https://musiclab.chromeexperiments.com/Song-Maker/song/5100954262700032
 	Sprites from: https://opengameart.org/content/animated-top-down-survivor-player
 
-	TODO: Destroy bullets when they hit the wall
 	TODO: Use Vector2 whenever possible.
 	TODO: Have shot lead target.
 	TODO: Make a smaller person collision box for bullet collisions.
@@ -59,8 +59,8 @@ public class MyGame extends ApplicationAdapter {
 
 		setInputProcessor();
 
-		Person p1 = new Person(this, 1, 100, 300);
-		Person p2 = new Person(this, 2,  400, 200);
+		Person p1 = new Person(this, 1, new Vector2(100, 300));
+		Person p2 = new Person(this, 2,  new Vector2(400, 200));
 	}
 
 	private float randomPos() {
@@ -104,7 +104,7 @@ public class MyGame extends ApplicationAdapter {
 			Iterator<Person> pi = people.values().iterator();
 			while (pi.hasNext()) {
 				Person p = pi.next();
-				if (!p.shot(b) && p.getBoundingRectangle().contains(b.x, b.y)) {
+				if (!p.shot(b) && p.getBoundingRectangle().contains(b.pos)) {
 					pi.remove();
 					bi.remove();
 					break;
