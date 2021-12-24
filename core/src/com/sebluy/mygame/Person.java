@@ -20,7 +20,6 @@ public class Person {
 	Vector2 pos;
 	int id;
 	int team;
-	boolean pickedUp;
 	MyGame game;
 	Map<Integer, Bullet> bullets;
 	float directionTimeout = 0;
@@ -68,17 +67,11 @@ public class Person {
 	}
 
 	public void update() {
-		if (pickedUp) {
-			Vector3 cs = game.unproject(Gdx.input.getX(), Gdx.input.getY());
-			pos.x = cs.x;
-			pos.y = cs.y;
-		} else {
-			if (directionTimeout <= 0) {
-				updateDirection(direction + (float)(Math.random() - 0.5) * 8f);
-				directionTimeout = 0.1f;
-			}
-			pos.add(vel.cpy().scl(Gdx.graphics.getDeltaTime()));
+		if (directionTimeout <= 0) {
+			updateDirection(direction + (float)(Math.random() - 0.5) * 8f);
+			directionTimeout = 0.1f;
 		}
+		pos.add(vel.cpy().scl(Gdx.graphics.getDeltaTime()));
 		for (Person person2 : game.people.values()) {
 			tryToShoot(person2);
 		}
@@ -151,14 +144,6 @@ public class Person {
 		game.shapeRenderer.rect(rect.x, rect.y, rect.width, rect.height);
 		game.shapeRenderer.setColor(0, 1, 0, 1);
 		game.shapeRenderer.circle(pos.x, pos.y, 20);
-	}
-
-	public void pickUp() {
-		pickedUp = true;
-	}
-
-	public void setDown() {
-		pickedUp = false;
 	}
 
 	public boolean shot(Bullet b) {
